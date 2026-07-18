@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>Smart Input Data</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#f4f8ff;
+padding:15px;
+}
+
+.header{
+background:#0d6efd;
+color:white;
+padding:20px;
+border-radius:15px;
+text-align:center;
+margin-bottom:15px;
+}
+
+.logo{
+font-size:50px;
+margin-bottom:10px;
+}
+
+.card{
+background:white;
+padding:15px;
+border-radius:15px;
+box-shadow:0 2px 10px rgba(0,0,0,.1);
+margin-bottom:15px;
+}
+
+.dashboard{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+margin-top:10px;
+}
+
+.box{
+background:#0d6efd;
+color:white;
+padding:15px;
+border-radius:10px;
+text-align:center;
+}
+
+.box h3{
+margin-top:10px;
+font-size:20px;
+}
+
+label{
+display:block;
+margin-top:10px;
+font-weight:bold;
+}
+
+input,
+select,
+textarea{
+width:100%;
+padding:10px;
+border:1px solid #ccc;
+border-radius:8px;
+margin-top:5px;
+}
+
+textarea{
+resize:none;
+height:80px;
+}
+
+button{
+padding:12px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+margin-top:10px;
+}
+
+.btn-save{
+background:#198754;
+color:white;
+width:100%;
+}
+
+.btn-danger{
+background:red;
+color:white;
+}
+
+.btn-primary{
+background:#0d6efd;
+color:white;
+}
+
+.btn-warning{
+background:orange;
+color:white;
+}
+
+.btn-success{
+background:green;
+color:white;
+}
+
+.search{
+margin-bottom:10px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+font-size:12px;
+}
+
+th{
+background:#0d6efd;
+color:white;
+padding:8px;
+}
+
+td{
+padding:8px;
+border:1px solid #ddd;
+}
+
+.action{
+display:flex;
+flex-wrap:wrap;
+gap:5px;
+margin-top:10px;
+}
+
+@media(max-width:768px){
+
+.dashboard{
+grid-template-columns:1fr;
+}
+
+table{
+font-size:10px;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+
+<div class="logo">📘</div>
+
+<h2>SMART INPUT DATA</h2>
+
+<p>Sistem Transaksi Cat Modern</p>
+
+</div>
+
+<div class="card">
+
+<h3>Dashboard</h3>
+
+<div class="dashboard">
+
+<div class="box">
+Total Transaksi
+<h3 id="totalTransaksi">0</h3>
+</div>
+
+<div class="box">
+Total Barang
+<h3 id="totalBarang">0</h3>
+</div>
+
+<div class="box">
+Total Nilai
+<h3 id="totalRupiah">Rp 0</h3>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>Input Transaksi</h3>
+
+<label>No Transaksi</label>
+<input type="text" id="nomor" readonly>
+
+<label>Tanggal Transaksi</label>
+<input type="date" id="tanggal">
+
+<label>Nama Barang</label>
+<select id="barang">
+
+<option>Splesh</option>
+<option>EcoClean</option>
+<option>Property Interior</option>
+<option>Rain Block</option>
+<option>Tropic</option>
+<option>Diamond Shield</option>
+<option>Anti Mosquito</option>
+<option>Property Gloss</option>
+<option>OK 100</option>
+
+</select>
+
+<label>Base Barang</label>
+<select id="base">
+
+<option>Pastel</option>
+<option>Ultra Pastel</option>
+<option>Accent</option>
+<option>Ultra Accent</option>
+<option>Deep</option>
+<option>Tint</option>
+
+</select>
+
+<label>Packaging</label>
+<select id="packaging">
+
+<option>Kaleng</option>
+<option>Galon</option>
+<option>Pail</option>
+
+</select>
+
+<label>Jumlah Barang</label>
+<input type="number" id="jumlah" value="1">
+
+<label>Harga Barang (Rp)</label>
+<input type="number" id="harga" value="0">
+
+<label>Total Harga</label>
+<input type="number" id="total" readonly>
+
+<label>Keterangan</label>
+<textarea id="keterangan"></textarea>
+
+<button class="btn-save" onclick="simpanData()">
+💾 Simpan Data
+</button>
+
+</div>
+
+<div class="card">
+
+<h3>Data Transaksi</h3>
+
+<input
+type="text"
+id="search"
+class="search"
+placeholder="Cari Data..."
+onkeyup="cariData()">
+
+<div class="action">
+
+<button
+class="btn-success"
+onclick="exportExcel()">
+📗 Excel
+</button>
+
+<button
+class="btn-primary"
+onclick="exportPDF()">
+📄 PDF
+</button>
+
+<button
+class="btn-warning"
+onclick="window.print()">
+🖨 Cetak
+</button>
+
+<button
+class="btn-danger"
+onclick="resetData()">
+🗑 Reset
+</button>
+
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>No</th>
+<th>Transaksi</th>
+<th>Tanggal</th>
+<th>Barang</th>
+<th>Base</th>
+<th>Pack</th>
+<th>Qty</th>
+<th>Harga</th>
+<th>Total</th>
+<th>Aksi</th>
+
+</tr>
+
+</thead>
+
+<tbody id="tbody">
+
+</tbody>
+
+</table>
+
+</div>
+<script>
+
+let dataTransaksi =
+JSON.parse(localStorage.getItem("smartInputData")) || [];
+
+const nomor = document.getElementById("nomor");
+const tanggal = document.getElementById("tanggal");
+const barang = document.getElementById("barang");
+const base = document.getElementById("base");
+const packaging = document.getElementById("packaging");
+const jumlah = document.getElementById("jumlah");
+const harga = document.getElementById("harga");
+const total = document.getElementById("total");
+const keterangan = document.getElementById("keterangan");
+
+function generateNomor(){
+
+let no = "TRX-" +
+String(dataTransaksi.length + 1).padStart(5,"0");
+
+nomor.value = no;
+
+}
+
+generateNomor();
+
+tanggal.valueAsDate = new Date();
+
+function hitungTotal(){
+
+let qty = parseFloat(jumlah.value) || 0;
+let hrg = parseFloat(harga.value) || 0;
+
+total.value = qty * hrg;
+
+simpanDraft();
+
+}
+
+jumlah.addEventListener("input", hitungTotal);
+harga.addEventListener("input", hitungTotal);
+
+function simpanDraft(){
+
+const draft = {
+
+tanggal: tanggal.value,
+barang: barang.value,
+base: base.value,
+packaging: packaging.value,
+jumlah: jumlah.value,
+harga: harga.value,
+total: total.value,
+keterangan: keterangan.value
+
+};
+
+localStorage.setItem(
+"draftSmartInput",
+JSON.stringify(draft)
+);
+
+}
+
+tanggal.addEventListener("change", simpanDraft);
+barang.addEventListener("change", simpanDraft);
+base.addEventListener("change", simpanDraft);
+packaging.addEventListener("change", simpanDraft);
+keterangan.addEventListener("input", simpanDraft);
+
+function loadDraft(){
+
+const draft =
+JSON.parse(
+localStorage.getItem("draftSmartInput")
+);
+
+if(!draft) return;
+
+tanggal.value = draft.tanggal || tanggal.value;
+barang.value = draft.barang || barang.value;
+base.value = draft.base || base.value;
+packaging.value = draft.packaging || packaging.value;
+jumlah.value = draft.jumlah || 1;
+harga.value = draft.harga || 0;
+total.value = draft.total || 0;
+keterangan.value = draft.keterangan || "";
+
+}
+
+loadDraft();
+
+function simpanData(){
+
+const item = {
+
+nomor: nomor.value,
+tanggal: tanggal.value,
+barang: barang.value,
+base: base.value,
+packaging: packaging.value,
+jumlah: Number(jumlah.value),
+harga: Number(harga.value),
+total: Number(total.value),
+keterangan: keterangan.value
+
+};
+
+dataTransaksi.push(item);
+
+localStorage.setItem(
+"smartInputData",
+JSON.stringify(dataTransaksi)
+);
+
+localStorage.removeItem(
+"draftSmartInput"
+);
+
+alert("Data berhasil disimpan");
+
+bersihkanForm();
+tampilkanData();
+updateDashboard();
+generateNomor();
+
+}
+
+function bersihkanForm(){
+
+jumlah.value = 1;
+harga.value = 0;
+total.value = 0;
+keterangan.value = "";
+
+}
+
+function updateDashboard(){
+
+let totalTransaksi = dataTransaksi.length;
+let totalBarang = 0;
+let totalRupiah = 0;
+
+dataTransaksi.forEach(item=>{
+
+totalBarang += Number(item.jumlah);
+totalRupiah += Number(item.total);
+
+});
+
+document.getElementById("totalTransaksi").innerText =
+totalTransaksi;
+
+document.getElementById("totalBarang").innerText =
+totalBarang;
+
+document.getElementById("totalRupiah").innerText =
+"Rp " + totalRupiah.toLocaleString("id-ID");
+
+}
+
+</script>
+<script>
+
+function tampilkanData(){
+
+const tbody =
+document.getElementById("tbody");
+
+tbody.innerHTML = "";
+
+dataTransaksi.forEach((item,index)=>{
+
+tbody.innerHTML += `
+
+<tr>
+
+<td>${index + 1}</td>
+
+<td>${item.nomor}</td>
+
+<td>${item.tanggal}</td>
+
+<td>${item.barang}</td>
+
+<td>${item.base}</td>
+
+<td>${item.packaging}</td>
+
+<td>${item.jumlah}</td>
+
+<td>
+Rp ${Number(item.harga)
+.toLocaleString("id-ID")}
+</td>
+
+<td>
+Rp ${Number(item.total)
+.toLocaleString("id-ID")}
+</td>
+
+<td>
+
+<button
+class="btn-danger"
+onclick="hapusData(${index})">
+
+Hapus
+
+</button>
+
+</td>
+
+</tr>
+
+`;
+
+});
+
+}
+
+function hapusData(index){
+
+if(confirm("Hapus data ini?")){
+
+dataTransaksi.splice(index,1);
+
+localStorage.setItem(
+"smartInputData",
+JSON.stringify(dataTransaksi)
+);
+
+tampilkanData();
+updateDashboard();
+generateNomor();
+
+}
+
+}
+
+tampilkanData();
+updateDashboard();
+
+</script>
+<table>
+
+<thead>
+
+<tr>
+<th>No</th>
+<th>No Transaksi</th>
+<th>Tanggal</th>
+<th>Barang</th>
+<th>Base</th>
+<th>Packaging</th>
+<th>Qty</th>
+<th>Harga</th>
+<th>Total</th>
+<th>Aksi</th>
+</tr>
+
+</thead>
+
+<tbody id="tbody">
+
+</tbody>
+
+</table>
+<input
+type="text"
+id="search"
+placeholder="🔍 Cari Data..."
+onkeyup="cariData()"
+style="
+width:100%;
+padding:10px;
+margin-bottom:10px;
+border:1px solid #ccc;
+border-radius:8px;">
+<script>
+
+function cariData(){
+
+let keyword =
+document.getElementById("search")
+.value.toLowerCase();
+
+let rows =
+document.querySelectorAll("#tbody tr");
+
+rows.forEach(function(row){
+
+let isi =
+row.innerText.toLowerCase();
+
+if(isi.includes(keyword)){
+
+row.style.display = "";
+
+}else{
+
+row.style.display = "none";
+
+}
+
+});
+
+}
+
+</script>
+<script>
+
+function cariData(){
+
+const keyword =
+document.getElementById("search")
+.value.toLowerCase().trim();
+
+const tbody =
+document.getElementById("tbody");
+
+tbody.innerHTML = "";
+
+const hasil = dataTransaksi.filter(item => {
+
+return (
+(item.nomor || "").toLowerCase().includes(keyword) ||
+(item.tanggal || "").toLowerCase().includes(keyword) ||
+(item.barang || "").toLowerCase().includes(keyword) ||
+(item.base || "").toLowerCase().includes(keyword) ||
+(item.packaging || "").toLowerCase().includes(keyword) ||
+String(item.jumlah).includes(keyword) ||
+String(item.harga).includes(keyword) ||
+String(item.total).includes(keyword) ||
+(item.keterangan || "").toLowerCase().includes(keyword)
+
+);
+
+});
+
+hasil.forEach((item,index)=>{
+
+tbody.innerHTML += `
+
+<tr>
+
+<td>${index+1}</td>
+<td>${item.nomor}</td>
+<td>${item.tanggal}</td>
+<td>${item.barang}</td>
+<td>${item.base}</td>
+<td>${item.packaging}</td>
+<td>${item.jumlah}</td>
+
+<td>
+Rp ${Number(item.harga).toLocaleString("id-ID")}
+</td>
+
+<td>
+Rp ${Number(item.total).toLocaleString("id-ID")}
+</td>
+
+<td>
+<button
+class="btn-danger"
+onclick="hapusData(${dataTransaksi.indexOf(item)})">
+Hapus
+</button>
+</td>
+
+</tr>
+
+`;
+
+});
+
+if(hasil.length === 0){
+
+tbody.innerHTML = `
+
+<tr>
+<td colspan="10" style="text-align:center;">
+Data tidak ditemukan
+</td>
+</tr>
+
+`;
+
+}
+
+}
+
+</script>
+<input
+type="search"
+id="search"
+placeholder="🔍 Cari nomor transaksi, barang, base, packaging..."
+onkeyup="cariData()">
+<script>
+
+function hapusData(index){
+
+const konfirmasi = confirm(
+"Yakin ingin menghapus data ini?"
+);
+
+if(!konfirmasi){
+return;
+}
+
+dataTransaksi.splice(index,1);
+
+localStorage.setItem(
+"smartInputData",
+JSON.stringify(dataTransaksi)
+);
+
+tampilkanData();
+updateDashboard();
+
+alert("Data berhasil dihapus");
+
+}
+
+</script>
+
+<button
+class="btn-danger"
+onclick="hapusData(${index})">
+🗑 Hapus
+</button>
+<td>
+<button
+class="btn-danger"
+onclick="hapusData(${index})">
+🗑 Hapus
+</button>
+</td>
+
+<button
+class="btn-danger"
+onclick="resetData()">
+🗑 Reset Semua Data
+</button>
+<script>
+
+function resetData(){
+
+const konfirmasi = confirm(
+"Semua data akan dihapus. Lanjutkan?"
+);
+
+if(!konfirmasi){
+return;
+}
+
+dataTransaksi = [];
+
+localStorage.removeItem(
+"smartInputData"
+);
+
+tampilkanData();
+updateDashboard();
+generateNomor();
+
+alert("Semua data berhasil dihapus");
+
+}
+
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<button
+class="btn-success"
+onclick="exportExcel()">
+📗 Export Excel
+</button>
+<script>
+
+function exportExcel(){
+
+if(dataTransaksi.length === 0){
+
+alert("Belum ada data untuk diexport");
+return;
+
+}
+
+const dataExcel = dataTransaksi.map(item => ({
+
+"No Transaksi": item.nomor,
+"Tanggal": item.tanggal,
+"Nama Barang": item.barang,
+"Base Barang": item.base,
+"Packaging": item.packaging,
+"Jumlah": item.jumlah,
+"Harga": item.harga,
+"Total": item.total,
+"Keterangan": item.keterangan
+
+}));
+
+const worksheet =
+XLSX.utils.json_to_sheet(dataExcel);
+
+const workbook =
+XLSX.utils.book_new();
+
+XLSX.utils.book_append_sheet(
+workbook,
+worksheet,
+"Transaksi"
+);
+
+const tanggalExport =
+new Date().toISOString().split("T")[0];
+
+XLSX.writeFile(
+workbook,
+`Laporan_Transaksi_${tanggalExport}.xlsx`
+);
+
+}
+
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<button
+class="btn-primary"
+onclick="exportPDF()">
+📄 Export PDF
+</button>
+<script>
+
+async function exportPDF(){
+
+if(dataTransaksi.length === 0){
+
+alert("Belum ada data untuk diexport");
+return;
+
+}
+
+const { jsPDF } = window.jspdf;
+
+const doc = new jsPDF();
+
+doc.setFontSize(16);
+doc.text("LAPORAN TRANSAKSI", 14, 15);
+
+doc.setFontSize(10);
+
+let y = 30;
+
+dataTransaksi.forEach((item,index)=>{
+
+const baris =
+`${index+1}. ${item.nomor} | ${item.tanggal} | ${item.barang} | Qty:${item.jumlah} | Rp ${Number(item.total).toLocaleString("id-ID")}`;
+
+doc.text(baris, 10, y);
+
+y += 8;
+
+if(y > 280){
+
+doc.addPage();
+y = 20;
+
+}
+
+});
+
+let totalNilai = 0;
+
+dataTransaksi.forEach(item=>{
+totalNilai += Number(item.total);
+});
+
+y += 10;
+
+doc.setFontSize(12);
+
+doc.text(
+`Total Nilai Transaksi : Rp ${totalNilai.toLocaleString("id-ID")}`,
+10,
+y
+);
+
+const tanggal =
+new Date().toISOString().split("T")[0];
+
+doc.save(
+`Laporan_Transaksi_${tanggal}.pdf`
+);
+
+}
+
+</script>
+<script>
+
+// Simpan halaman saat ini
+window.addEventListener("beforeunload", function(){
+
+localStorage.setItem(
+"halamanTerakhir",
+window.location.href
+);
+
+});
+
+</script>
+<script>
+
+window.addEventListener("load", function(){
+
+const halamanTerakhir =
+localStorage.getItem("halamanTerakhir");
+
+if(
+halamanTerakhir &&
+halamanTerakhir !== window.location.href
+){
+
+window.location.href = halamanTerakhir;
+
+}
+
+});
+
+</script>
+<script>
+
+window.addEventListener("load", function(){
+
+const halamanTerakhir =
+localStorage.getItem("halamanTerakhir");
+
+if(
+halamanTerakhir &&
+halamanTerakhir !== window.location.href
+){
+
+window.location.href = halamanTerakhir;
+
+}
+
+});
+
+</script>
+<script>
+
+window.addEventListener("scroll", function(){
+
+localStorage.setItem(
+"scrollPosisi",
+window.scrollY
+);
+
+});
+
+window.addEventListener("load", function(){
+
+const posisi =
+localStorage.getItem("scrollPosisi");
+
+if(posisi){
+
+window.scrollTo(
+0,
+parseInt(posisi)
+);
+
+}
+
+});
+
+</script>
+<script>
+
+function simpanDraft(){
+
+const draft = {
+
+tanggal:
+document.getElementById("tanggal").value,
+
+barang:
+document.getElementById("barang").value,
+
+base:
+document.getElementById("base").value,
+
+packaging:
+document.getElementById("packaging").value,
+
+jumlah:
+document.getElementById("jumlah").value,
+
+harga:
+document.getElementById("harga").value,
+
+keterangan:
+document.getElementById("keterangan").value
+
+};
+
+localStorage.setItem(
+"draftTransaksi",
+JSON.stringify(draft)
+);
+
+}
+
+</script>
+<script>
+
+// ===============================
+// SIMPAN POSISI SCROLL TERAKHIR
+// ===============================
+
+window.addEventListener("scroll", () => {
+
+localStorage.setItem(
+"lastScrollPosition",
+window.scrollY
+);
+
+});
+
+window.addEventListener("load", () => {
+
+const posisi =
+localStorage.getItem(
+"lastScrollPosition"
+);
+
+if(posisi){
+
+window.scrollTo(
+0,
+parseInt(posisi)
+);
+
+}
+
+});
+
+// ===============================
+// SIMPAN FORM TERAKHIR
+// ===============================
+
+const formIds = [
+
+"tanggal",
+"barang",
+"base",
+"packaging",
+"jumlah",
+"harga",
+"keterangan"
+
+];
+
+formIds.forEach(id => {
+
+const element =
+document.getElementById(id);
+
+if(!element) return;
+
+element.addEventListener(
+"input",
+simpanForm
+);
+
+element.addEventListener(
+"change",
+simpanForm
+);
+
+});
+
+function simpanForm(){
+
+const dataForm = {
+
+tanggal:
+document.getElementById("tanggal")?.value || "",
+
+barang:
+document.getElementById("barang")?.value || "",
+
+base:
+document.getElementById("base")?.value || "",
+
+packaging:
+document.getElementById("packaging")?.value || "",
+
+jumlah:
+document.getElementById("jumlah")?.value || "",
+
+harga:
+document.getElementById("harga")?.value || "",
+
+keterangan:
+document.getElementById("keterangan")?.value || ""
+
+};
+
+localStorage.setItem(
+"lastFormData",
+JSON.stringify(dataForm)
+);
+
+}
+
+function loadLastForm(){
+
+const data =
+JSON.parse(
+localStorage.getItem(
+"lastFormData"
+)
+);
+
+if(!data) return;
+
+if(document.getElementById("tanggal"))
+document.getElementById("tanggal").value =
+data.tanggal || "";
+
+if(document.getElementById("barang"))
+document.getElementById("barang").value =
+data.barang || "";
+
+if(document.getElementById("base"))
+document.getElementById("base").value =
+data.base || "";
+
+if(document.getElementById("packaging"))
+document.getElementById("packaging").value =
+data.packaging || "";
+
+if(document.getElementById("jumlah"))
+document.getElementById("jumlah").value =
+data.jumlah || 1;
+
+if(document.getElementById("harga"))
+document.getElementById("harga").value =
+data.harga || 0;
+
+if(document.getElementById("keterangan"))
+document.getElementById("keterangan").value =
+data.keterangan || "";
+
+}
+
+window.addEventListener(
+"load",
+loadLastForm
+);
+
+</script>
