@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Input Data - Persistent</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        body { font-family: Arial, sans-serif; background: #eef5ff; padding: 20px; margin: 0; }
+        .header { background: #0066cc; color: #fff; padding: 20px; text-align: center; border-radius: 10px; margin-bottom: 20px; }
+        .container, .card { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; color: #333; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        textarea { height: 70px; resize: vertical; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; color: white; cursor: pointer; margin: 5px 5px 5px 0; font-weight: bold; }
+        .save { background: #0066cc; }
+        .pdf { background: #dc3545; }
+        .excel { background: #198754; }
+        .reset { background: #ff9800; }
+        .btn:hover { opacity: 0.9; }
+        .dashboard { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .card { text-align: center; flex: 1; min-width: 180px; padding: 15px; }
+        .card h3 { margin: 0 0 10px 0; color: #666; font-size: 16px; }
+        .card h2 { margin: 0; color: #0066cc; font-size: 24px; }
+        .table-responsive { overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #0066cc; color: white; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .hapus { background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>SMART INPUT DATA</h1>
+    <p>Aplikasi Stok Barang Toko Cat</p>
+</div>
+
+<div class="dashboard">
+    <div class="card"><h3>Total Transaksi</h3><h2 id="totalTransaksi">0</h2></div>
+    <div class="card"><h3>Total Barang (Qty)</h3><h2 id="totalBarang">0</h2></div>
+    <div class="card"><h3>Total Nilai Aset</h3><h2 id="totalNilai">Rp 0</h2></div>
+</div>
+
+<div class="container">
+    <div class="grid">
+        <div><label>Tanggal Transaksi</label><input type="date" id="tanggal" oninput="saveDraft()"></div>
+        <div><label>Nama Barang</label><select id="barang" onchange="saveDraft()"><option>Splesh</option><option>EcoClean</option><option>Property Interior</option><option>Rain Block</option><option>Tropic</option><option>Diamond Shield</option><option>Anti Mosquito</option><option>Property Gloss</option><option>OK 100</option></select></div>
+        <div><label>Base Barang</label><select id="base" onchange="saveDraft()"><option>Pastel</option><option>Ultra Pastel</option><option>Accent</option><option>Ultra Accent</option><option>Deep</option><option>Tint</option><option>White Base</option><option>Clear Base</option><option>Medium Base</option><option>Neutral Base</option></select></div>
+        <div><label>Packaging</label><select id="packaging" onchange="saveDraft()"><option>Kaleng</option><option>Galon</option><option>Pail</option></select></div>
+        <div><label>Jumlah Barang (Qty)</label><input type="number" id="jumlah" oninput="hitungTotal(); saveDraft()"></div>
+        <div><label>Harga Satuan (Rp)</label><input type="number" id="harga" oninput="hitungTotal(); saveDraft()"></div>
+        <div><label>Total Harga</label><input type="text" id="totalHarga" readonly style="background: #e9ecef;"></div>
+        <div><label>Keterangan</label><textarea id="keterangan" oninput="saveDraft()" placeholder="Catatan..."></textarea></div>
+    </div>
+
+    <button class="btn save" onclick="simpanData()">Simpan</button>
+    <button class="btn pdf" onclick="downloadPDF()">Cetak PDF</button>
+    <button class="btn excel" onclick="downloadExcel()">Ekspor Excel</button>
+    <button class="btn reset" onclick="resetData()">Reset Semua</button>
+
+    <input type="text" id="cari" placeholder="Cari data..." style="margin-top: 20px;" onkeyup="cariData()">
+
+    <div class="table-responsive">
+        <table id="tabel">
+            <thead>
+                <tr><th>No</th><th>Tanggal</th><th>Barang</th><th>Base</th><th>Packaging</th><th>Qty</th><th>Harga</th><th>Total</th><th>Keterangan</th><th>Aksi</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let dataBarang = [];
+
+    // Fungsi menyimpan draf ke LocalStorage
+    function saveDraft() {
+        const draft = {
+            tanggal: document.getElementById('tanggal').value,
+            barang: document.getElementById('barang').value,
+            base: document.getElementById('base').value,
+            packaging: document.getElementById('packaging').value,
+            jumlah: document.getElementById('jumlah').value,
+            harga: document.getElementById('harga').value,
+            keterangan: document.getElementById('keterangan').value
+        };
+        localStorage.setItem("draftStok", JSON.stringify(draft));
+    }
+
+    // Peringatan saat akan refresh
+    window.onbeforeunload = function() {
+        return "Data yang sedang Anda isi mungkin belum disimpan. Yakin ingin keluar?";
+    };
+
+    function rupiah(angka){
+        return new Intl.NumberFormat('id-ID',{ style:'currency', currency:'IDR', minimumFractionDigits:0 }).format(angka);
+    }
+
+    function hitungTotal(){
+        const qty = Number(document.getElementById('jumlah').value) || 0;
+        const harga = Number(document.getElementById('harga').value) || 0;
+        document.getElementById('totalHarga').value = rupiah(qty * harga);
+    }
+
+    function simpanData(){
+        const tgl = document.getElementById('tanggal');
+        const jml = document.getElementById('jumlah');
+        const hrg = document.getElementById('harga');
+
+        if(!tgl.value || !jml.value || !hrg.value){
+            alert("Lengkapi data!"); return;
+        }
+
+        dataBarang.push({
+            tanggal: tgl.value,
+            barang: document.getElementById('barang').value,
+            base: document.getElementById('base').value,
+            packaging: document.getElementById('packaging').value,
+            jumlah: Number(jml.value),
+            harga: Number(hrg.value),
+            total: Number(jml.value) * Number(hrg.value),
+            keterangan: document.getElementById('keterangan').value
+        });
+
+        localStorage.setItem("stokBarang", JSON.stringify(dataBarang));
+        
+        // Hapus draf setelah berhasil disimpan
+        localStorage.removeItem("draftStok");
+        
+        // Reset form
+        document.getElementById('jumlah').value = "";
+        document.getElementById('harga').value = "";
+        document.getElementById('totalHarga').value = "";
+        document.getElementById('keterangan').value = "";
+        
+        tampilkanData();
+    }
+
+    function tampilkanData(){
+        let tbody = document.querySelector("#tabel tbody");
+        tbody.innerHTML = "";
+        let totalQty = 0, totalNilaiAset = 0;
+
+        dataBarang.forEach((d, i) => {
+            totalQty += d.jumlah;
+            totalNilaiAset += d.total;
+            tbody.innerHTML += `<tr><td>${i + 1}</td><td>${d.tanggal}</td><td>${d.barang}</td><td>${d.base}</td><td>${d.packaging}</td><td>${d.jumlah}</td><td>${rupiah(d.harga)}</td><td>${rupiah(d.total)}</td><td>${d.keterangan || '-'}</td><td><button class="hapus" onclick="hapusData(${i})">Hapus</button></td></tr>`;
+        });
+
+        document.getElementById("totalTransaksi").innerText = dataBarang.length;
+        document.getElementById("totalBarang").innerText = totalQty;
+        document.getElementById("totalNilai").innerText = rupiah(totalNilaiAset);
+    }
+
+    function hapusData(i){
+        if(confirm("Hapus data?")) {
+            dataBarang.splice(i, 1);
+            localStorage.setItem("stokBarang", JSON.stringify(dataBarang));
+            tampilkanData();
+        }
+    }
+
+    function resetData(){
+        if(confirm("Hapus semua data permanen?")){
+            dataBarang = [];
+            localStorage.removeItem("stokBarang");
+            localStorage.removeItem("draftStok");
+            tampilkanData();
+            location.reload(); // Reload bersih setelah reset
+        }
+    }
+
+    function cariData(){
+        let filter = document.getElementById("cari").value.toUpperCase();
+        document.querySelectorAll("#tabel tbody tr").forEach(row => {
+            row.style.display = row.innerText.toUpperCase().includes(filter) ? "" : "none";
+        });
+    }
+
+    function downloadExcel(){
+        let ws = XLSX.utils.json_to_sheet(dataBarang);
+        let wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Data Stok");
+        XLSX.writeFile(wb, "SmartInputData_Stok.xlsx");
+    }
+
+    async function downloadPDF(){
+        const { jsPDF } = window.jspdf;
+        let doc = new jsPDF();
+        doc.text("LAPORAN STOK", 14, 15);
+        doc.autoTable({
+            head: [["No", "Tanggal", "Barang", "Base", "Packaging", "Qty", "Harga", "Total", "Keterangan"]],
+            body: dataBarang.map((d, i) => [i+1, d.tanggal, d.barang, d.base, d.packaging, d.jumlah, rupiah(d.harga), rupiah(d.total), d.keterangan]),
+            startY: 25
+        });
+        doc.save("Laporan_Stok.pdf");
+    }
+
+    window.onload = function(){
+        // 1. Muat Data Tersimpan
+        let data = localStorage.getItem("stokBarang");
+        if(data){
+            dataBarang = JSON.parse(data);
+            tampilkanData();
+        } else {
+            document.getElementById('tanggal').valueAsDate = new Date();
+        }
+
+        // 2. Muat Draft Input (jika ada sisa ketikan sebelum reload)
+        let draft = localStorage.getItem("draftStok");
+        if(draft){
+            let d = JSON.parse(draft);
+            document.getElementById('tanggal').value = d.tanggal;
+            document.getElementById('barang').value = d.barang;
+            document.getElementById('base').value = d.base;
+            document.getElementById('packaging').value = d.packaging;
+            document.getElementById('jumlah').value = d.jumlah;
+            document.getElementById('harga').value = d.harga;
+            document.getElementById('keterangan').value = d.keterangan;
+            hitungTotal();
+        }
+    }
+</script>
+
+</body>
+</html>
